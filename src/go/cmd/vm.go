@@ -684,7 +684,7 @@ func newVMMemorySnapshotCmd() *cobra.Command {
 
 func newVMRecordCmd() *cobra.Command {
 	StartRecord := &cobra.Command{
-		Use:   "vnc record fb <experiment name> <vm name> <file_name>", 
+		Use:   "namespace <experiment name> && vnc record fb <vm name> <file_name>", 
 		Short: "Start screen recording of a running VM in a specific experiment",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
@@ -694,9 +694,10 @@ func newVMRecordCmd() *cobra.Command {
 			var (
 				expName = args[0]
 				vmName  = args[1]
+				out     = args[2]
 			)
 
-			if err := vm.StartRecord(expName, vmName); err != nil {
+			if err := vm.StartRecord(expName, vmName, out); err != nil {
 				err := util.HumanizeError(err, "Unable to start recording on "+vmName+" VM")
 				return err.Humanized()
 			}

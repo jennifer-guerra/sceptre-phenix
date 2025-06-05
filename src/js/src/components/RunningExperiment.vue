@@ -54,7 +54,7 @@
         </div>
         <!-- ADDED RECORDING BUTTON -->
         <div v-if="roleAllowed('vms/???', 'update', expModal.fullName) && !showModifyStateBar">
-          <template v-if="!expModal.vm.running">                                                                 <! change to if recording started >
+          <template v-if="!expModal.vm.running">
             <b-tooltip label="stop recording" type="is-light">
               <b-button class="button is-light" icon-left="camera-video" @click="startRecord( expModal.vm.name )">    
               </b-button>

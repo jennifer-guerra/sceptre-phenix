@@ -53,14 +53,13 @@
           </template>
         </div>
         <!-- ADDED RECORDING BUTTON -->
-        <div v-if="!showModifyStateBar">
-          <template v-if="!expModal.vm.running">
-            <b-tooltip label="stop recording" type="is-light">
-              <b-button class="button is-light" icon-left="camera-video" @click="stopRecord( expModal.vm.name )">    
-              </b-button>
-            </b-tooltip>
-          </template>
-          <template v-else>
+        <!-- <b-tooltip label="stop recording" type="is-light"> -->
+        <!-- <b-button class="button is-light" icon-left="camera-video" @click="stopRecord( expModal.vm.name )">     -->
+        <!-- </b-button> -->
+        <!-- </b-tooltip> -->
+        <!-- <template v-else> -->
+          
+        <div v-if="!showModifyStateBar && expModal.vm.running">
             <b-tooltip label="start recording" type="is-light">
               <b-button class="button is-light" icon-left="camera-video-off" @click="startRecord( expModal.vm.name )">     
               </b-button>

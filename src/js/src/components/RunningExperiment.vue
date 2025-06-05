@@ -53,16 +53,16 @@
           </template>
         </div>
         <!-- ADDED RECORDING BUTTON -->
-        <div v-if="roleAllowed('vms', 'create', expModal.fullName) && !showModifyStateBar">
+        <div v-if="!showModifyStateBar">
           <template v-if="!expModal.vm.running">
             <b-tooltip label="stop recording" type="is-light">
-              <b-button class="button is-light" icon-left="camera-video" @click="startRecord( expModal.vm.name )">    
+              <b-button class="button is-light" icon-left="camera-video" @click="stopRecord( expModal.vm.name )">    
               </b-button>
             </b-tooltip>
           </template>
           <template v-else>
             <b-tooltip label="start recording" type="is-light">
-              <b-button class="button is-light" icon-left="camera-video-off" @click="stopRecord( expModal.vm.name )">     
+              <b-button class="button is-light" icon-left="camera-video-off" @click="startRecord( expModal.vm.name )">     
               </b-button>
             </b-tooltip>
           </template>

@@ -58,11 +58,12 @@
         </b-button>
         </b-tooltip> 
         <template v-else> 
-        </template> -->
+        </template> 
+        startRecord(expModal.vm.name)-->
           
         <div v-if="!showModifyStateBar && expModal.vm.running">
             <b-tooltip label="start recording" type="is-light">
-              <b-button class="button is-light" icon-left="hdd" @click="startRecord(expModal.vm.name)">     
+              <b-button class="button is-light" icon-left="hdd" @click="showMountDialog(expModal.vm.name)">     
               </b-button>
             </b-tooltip>
         </div>

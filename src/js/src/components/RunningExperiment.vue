@@ -54,11 +54,12 @@
         </div>
         <!-- ADDED RECORDING BUTTON 
         <b-tooltip label="stop recording" type="is-light"> 
-        <b-button class="button is-light" icon-left="camera-video" @click="stopRecord( expModal.vm.name )"> 
+        <b-button class="button is-light" icon-left="video-slash" @click="stopRecord( expModal.vm.name )"> 
         </b-button>
         </b-tooltip> 
         <template v-else> 
         </template> 
+        use video for start record image
         startRecord(expModal.vm.name)-->
           
         <div v-if="!showModifyStateBar && expModal.vm.running">

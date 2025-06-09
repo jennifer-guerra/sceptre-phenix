@@ -38,7 +38,7 @@
           </p>
       </section>
       <footer class="modal-card-foot buttons is-right">
-        <div v-if="roleAllowed('vms/start', 'update', expModal.fullName) && !showModifyStateBar">
+        <!-- <div v-if="roleAllowed('vms/start', 'update', expModal.fullName) && !showModifyStateBar">
           <template v-if="!expModal.vm.running">
             <b-tooltip label="start" type="is-light">
               <b-button class="button is-success" icon-left="play" @click="startVm( expModal.vm.name )">
@@ -60,7 +60,7 @@
         <template v-else> 
         </template> 
         use video for start record image
-        startRecord(expModal.vm.name)-->
+        startRecord(expModal.vm.name)
           
         <div v-if="!showModifyStateBar && expModal.vm.running">
             <b-tooltip label="start recording" type="is-light">
@@ -155,7 +155,7 @@
             <b-button class="button is-light" icon-left="window-close" @click="showModifyStateBar = false">
             </b-button>
           </b-tooltip>
-        </div>
+        </div> -->
       </footer>
     </div>
   </b-modal>

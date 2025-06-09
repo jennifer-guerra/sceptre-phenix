@@ -62,7 +62,7 @@
           
         <div v-if="!showModifyStateBar && expModal.vm.running">
             <b-tooltip label="start recording" type="is-light">
-              <b-button class="button is-light" icon-left="camera-video-off" @click="startRecord( expModal.vm.name )">     
+              <b-button class="button is-light" icon-left="hdd" @click="startRecord(expModal.vm.name)">     
               </b-button>
             </b-tooltip>
         </div>

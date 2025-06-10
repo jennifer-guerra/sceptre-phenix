@@ -55,9 +55,9 @@ func StartRecord(expName, vmName string, out string) error {
 
 	out = fmt.Sprintf("%s/files/%s", expName, filepath.Base(out))
 
-	if err := mm.StartRecord(mm.NS(expName), mm.VMName(vmName), mm.RecordingFile(out)); err != nil {
-		return fmt.Errorf("starting VM recording on VM %s in experiment %s: %w", vmName, expName, err)
-	}
+	// if err := StartRecord(mm.NS(expName), mm.VMName(vmName), mm.RecordingFile(out)); err != nil {
+	// 	return fmt.Errorf("starting VM recording on VM %s in experiment %s: %w", vmName, expName, err)
+	// }
 
 	return nil
 }

@@ -92,9 +92,9 @@ func StopRecord(expName, vmName string) error {
 		return fmt.Errorf("creating files directory for experiment %s: %w", expName, err)
 	}
 
-	if err := mm.StopRecord(mm.NS(expName), mm.VMName(vmName)); err != nil {
-		return fmt.Errorf("stopping VM recording for VM %s in experiment %s: %w", vmName, expName, err)
-	}
+	// if err := mm.StopRecord(mm.NS(expName), mm.VMName(vmName)); err != nil {
+	// 	return fmt.Errorf("stopping VM recording for VM %s in experiment %s: %w", vmName, expName, err)
+	// }
 
 	return nil
 }

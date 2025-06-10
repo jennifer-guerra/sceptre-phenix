@@ -69,13 +69,13 @@
             </b-tooltip>
         </div>
         
-        <div v-if="features.includes('vm-mount') && roleAllowed('vms/mount', 'post', expModal.fullName) && !showModifyStateBar && expModal.vm.running">
+        <!--<div v-if="features.includes('vm-mount') && roleAllowed('vms/mount', 'post', expModal.fullName) && !showModifyStateBar && expModal.vm.running">
           &nbsp;
           <b-tooltip :label="!expModal.vm.ccActive ? 'mount vm (requires active cc)' : 'mount vm'" type="is-light">
             <b-button class="button is-light" icon-left="hdd" @click="showMountDialog(expModal.vm.name)" :disabled="!expModal.vm.ccActive">
             </b-button>
           </b-tooltip>
-        </div>
+        </div> -->
         <div v-if="roleAllowed('vms/forwards', 'create', expModal.fullName) && !showModifyStateBar && expModal.vm.running">
           &nbsp;
           <b-tooltip label="create port forward" type="is-light">

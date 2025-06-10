@@ -1,7 +1,7 @@
 ARG PHENIX_REPO=sandialabs/sceptre-phenix
 ARG PHENIX_TAG=main
 
-FROM ghcr.io/${PHENIX_REPO}/phenix:${PHENIX_TAG}
+FROM phenix:latest
 
 # https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
 ARG PHENIX_REPO

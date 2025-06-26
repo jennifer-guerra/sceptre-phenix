@@ -1,0 +1,272 @@
+From e5d627cc0b53fd715ce30c02e6749a7ad6722aa8 Mon Sep 17 00:00:00 2001
+From: Nicholas Ryan <nicholas.ryan@nrel.gov>
+Date: Thu, 26 Jun 2025 10:04:08 -0600
+Subject: [PATCH] begin add vnc recording integration
+
+---
+ src/go/api/vm/record.go                     | 108 ++++++++++----------
+ src/go/api/vm/screen_record.go              |   1 -
+ src/go/web/handlers.go                      |  36 ++++++-
+ src/go/web/server.go                        |   3 +
+ src/js/src/components/RunningExperiment.vue |  13 +++
+ 5 files changed, 106 insertions(+), 55 deletions(-)
+ delete mode 100644 src/go/api/vm/screen_record.go
+
+diff --git a/src/go/api/vm/record.go b/src/go/api/vm/record.go
+index f3a68fc..bc9428b 100644
+--- a/src/go/api/vm/record.go
++++ b/src/go/api/vm/record.go
+@@ -1,26 +1,25 @@
+ package vm
+ 
+ import (
+-	"errors"
+ 	"fmt"
+-	"os"
+-	"path/filepath"
++	"phenix/util/mm/mmcli"
+ 
+-	"phenix/api/experiment"
+-	"phenix/util/mm"
++	"github.com/activeshadow/libminimega/miniclient"
+ )
+ 
+-var (
+-	ErrRecordExists = errors.New("recording already exists")
+-	ErrNoRecord    = errors.New("no recordings exist")
+-)
++func checkFirstError(response_channel chan *miniclient.Response) error {
++	for element := range response_channel {
++		for _, response := range element.Resp {
++			if response.Error != "" {
++				return fmt.Errorf(response.Error)
++			}
++		}
++	}
++	return nil
++}
+ 
+-// StartCapture starts a packet capture on the given interface for the given VM
+-// in the given experiment. The captured packets are written to the experiment's
+-// files directory using the base name of the provided output file in PCAP
+-// format. It returns any errors encountered while starting the packet capture.
+-func StartRecord(expName, vmName string, out string) error {
+-	if expName == "" {
++func StartScreenRecord(expNamespace, vmName, fileName string) error {
++	if expNamespace == "" {
+ 		return fmt.Errorf("no experiment name provided")
+ 	}
+ 
+@@ -28,11 +27,11 @@ func StartRecord(expName, vmName string, out string) error {
+ 		return fmt.Errorf("no VM name provided")
+ 	}
+ 
+-	if out == "" {
++	if fileName == "" {
+ 		return fmt.Errorf("no output file provided")
+ 	}
+ 
+-	vm, err := Get(expName, vmName)
++	vm, err := Get(expNamespace, vmName)
+ 	if err != nil {
+ 		return fmt.Errorf("getting VM details: %w", err)
+ 	}
+@@ -41,60 +40,63 @@ func StartRecord(expName, vmName string, out string) error {
+ 		return fmt.Errorf("VM is not running")
+ 	}
+ 
+-	// if iface < 0 || iface >= len(vm.Networks) {
+-	// 	return fmt.Errorf("invalid interface provided for capture")
+-	// }
+-
+-	// if vm.Networks[iface] == "disconnected" {
+-	// 	return fmt.Errorf("cannot capture on a disconnected interface")
+-	// }
+-
+-	if ext := filepath.Ext(out); ext != ".fb" {
+-		out = out + ".fb"
++	// Select active namespace
++	cmd := mmcli.Command{
++		Command: fmt.Sprint("namespace ", expNamespace),
++	}
++	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
++		return err
+ 	}
+ 
+-	out = fmt.Sprintf("%s/files/%s", expName, filepath.Base(out))
+-
+-	// if err := StartRecord(mm.NS(expName), mm.VMName(vmName), mm.RecordingFile(out)); err != nil {
+-	// 	return fmt.Errorf("starting VM recording on VM %s in experiment %s: %w", vmName, expName, err)
+-	// }
++	// Start VNC recording on VM
++	cmd = mmcli.Command{
++		Command: fmt.Sprint("vnc record fb ", vmName, fileName),
++	}
++	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
++		return err
++	}
+ 
+ 	return nil
+ }
+ 
+-// StopCaptures stops all currently running packet captures for the given VM in
+-// the given experiment. Due to a limitation in minimega, it is not possible to
+-// stop a single capture if more than one capture is running for a VM. It
+-// returns any errors encountered while stopping the packet captures.
+-func StopRecord(expName, vmName string) error {
+-	if expName == "" {
++func StopScreenRecord(expNamespace, vmName string) error {
++	if expNamespace == "" {
+ 		return fmt.Errorf("no experiment name provided")
+ 	}
+ 
+ 	if vmName == "" {
+ 		return fmt.Errorf("no VM name provided")
+ 	}
+-
+-	// captures := mm.GetVMCaptures(mm.NS(expName), mm.VMName(vmName))
+-
+-	// if captures == nil {
+-	// 	return fmt.Errorf("VM %s in experiment %s: %w", vmName, expName, ErrNoCaptures)
+-	// }
+-
+-	exp, err := experiment.Get(expName)
++	
++	vm, err := Get(expNamespace, vmName)
+ 	if err != nil {
+-		return fmt.Errorf("getting experiment %s: %w", expName, err)
++		return fmt.Errorf("getting VM details: %w", err)
+ 	}
+ 
+-	dir := fmt.Sprintf("%s/recordings", exp.Spec.BaseDir())
++	if !vm.Running {
++		return fmt.Errorf("VM is not running")
++	}
+ 
+-	if err := os.MkdirAll(dir, 0755); err != nil {
+-		return fmt.Errorf("creating files directory for experiment %s: %w", expName, err)
++	// Select active namespace
++	cmd := mmcli.Command{
++		Command: fmt.Sprint("namespace ", expNamespace),
++	}
++	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
++		return err
+ 	}
+ 
+-	// if err := mm.StopRecord(mm.NS(expName), mm.VMName(vmName)); err != nil {
+-	// 	return fmt.Errorf("stopping VM recording for VM %s in experiment %s: %w", vmName, expName, err)
+-	// }
++	// Stop VNC recording on VM
++	cmd = mmcli.Command{
++		Command: fmt.Sprint("vnc stop ", vmName),
++	}
++	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
++		return err
++	}
+ 
+ 	return nil
+ }
++
++func IsRecording(vmName string) bool {
++
++	return true
++}
+diff --git a/src/go/api/vm/screen_record.go b/src/go/api/vm/screen_record.go
+deleted file mode 100644
+index 8b13789..0000000
+--- a/src/go/api/vm/screen_record.go
++++ /dev/null
+@@ -1 +0,0 @@
+-
+diff --git a/src/go/web/handlers.go b/src/go/web/handlers.go
+index ad19bad..0be3ab2 100644
+--- a/src/go/web/handlers.go
++++ b/src/go/web/handlers.go
+@@ -1060,7 +1060,7 @@ func UpdateVM(w http.ResponseWriter, r *http.Request) {
+ 	case *proto.UpdateVMRequest_Host:
+ 		opts = append(opts, vm.UpdateWithHost(req.GetHost()))
+ 	}
+-	
++
+ 	switch req.SnapshotOption.(type) {
+ 	case *proto.UpdateVMRequest_Snapshot:
+ 		opts = append(opts, vm.UpdateWithSnapshot(req.GetSnapshot()))
+@@ -3026,3 +3026,37 @@ func parseInt(v string, d *int) error {
+ 	*d, err = strconv.Atoi(v)
+ 	return err
+ }
++
++func StartScreenRecord(w http.ResponseWriter, r *http.Request) {
++	plog.Debug("HTTP handler called", "handler", "StartScreenRecord")
++
++	var (
++		vars         = mux.Vars(r)
++		expNamespace = vars["exp"]
++		vmName       = vars["name"]
++		fileName     = vars["out"]
++	)
++
++	if err := vm.StartScreenRecord(expNamespace, vmName, fileName); err != nil {
++		plog.Debug("HTTP handler called", "handler", "StartScreenRecord", "Error:", err.Error())
++		w.WriteHeader(http.StatusInternalServerError)
++	}
++
++	w.WriteHeader(http.StatusOK)
++}
++
++func StopScreenRecord(w http.ResponseWriter, r *http.Request) {
++	plog.Debug("HTTP handler called", "handler", "StopScreenRecord")
++	var (
++		vars         = mux.Vars(r)
++		expNamespace = vars["exp"]
++		vmName       = vars["name"]
++	)
++
++	if err := vm.StopScreenRecord(expNamespace, vmName); err != nil {
++		plog.Debug("HTTP handler called", "handler", "StopScreenRecord", "Error:", err.Error())
++		w.WriteHeader(http.StatusInternalServerError)
++	}
++
++	w.WriteHeader(http.StatusOK)
++}
+diff --git a/src/go/web/server.go b/src/go/web/server.go
+index 0f53fda..449407f 100644
+--- a/src/go/web/server.go
++++ b/src/go/web/server.go
+@@ -246,6 +246,9 @@ func Start(opts ...ServerOption) error {
+ 	api.HandleFunc("/console/{pid}/ws", WsConsole).Methods("GET", "OPTIONS")
+ 	api.HandleFunc("/console/{pid}/size", ResizeConsole).Methods("POST", "OPTIONS").Queries("cols", "{cols:[0-9]+}", "rows", "{rows:[0-9]+}")
+ 
++	api.HandleFunc("/experiments/{exp}/vms/{name}/startScreenRecording/{out}", StartScreenRecord).Methods("GET", "OPTIONS")
++	api.HandleFunc("/experiments/{exp}/vms/{name}/stopScreenRecording", StopScreenRecord).Methods("POST", "OPTIONS")
++
+ 	workflowRoutes := []route{
+ 		{"/workflow/apply/{branch}", weberror.ErrorHandler(ApplyWorkflow), []string{"POST"}},
+ 		{"/workflow/configs/{branch}", weberror.ErrorHandler(WorkflowUpsertConfig), []string{"POST"}},
+diff --git a/src/js/src/components/RunningExperiment.vue b/src/js/src/components/RunningExperiment.vue
+index 96bb72a..d4b564a 100644
+--- a/src/js/src/components/RunningExperiment.vue
++++ b/src/js/src/components/RunningExperiment.vue
+@@ -2472,6 +2472,19 @@
+           })
+         }   
+       },
++
++      // startRecording (name) {
++
++      // },
++
++      // stopRecording (name) {
++
++      // },
++
++      // getStatus (name) {
++
++      //},
++
+         
+       shutdownVm  (name) {
+         if (! Array.isArray(name)) {
+-- 
+2.34.1
+

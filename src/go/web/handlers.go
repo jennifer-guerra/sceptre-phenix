@@ -1060,7 +1060,7 @@ func UpdateVM(w http.ResponseWriter, r *http.Request) {
 	case *proto.UpdateVMRequest_Host:
 		opts = append(opts, vm.UpdateWithHost(req.GetHost()))
 	}
-	
+
 	switch req.SnapshotOption.(type) {
 	case *proto.UpdateVMRequest_Snapshot:
 		opts = append(opts, vm.UpdateWithSnapshot(req.GetSnapshot()))
@@ -3025,4 +3025,34 @@ func parseInt(v string, d *int) error {
 	var err error
 	*d, err = strconv.Atoi(v)
 	return err
+}
+
+func StartScreenRecord(w http.ResponseWriter, r *http.Request) {
+	plog.Debug("HTTP handler called", "handler", "StartScreenRecord")
+
+	var (
+		vars         = mux.Vars(r)
+		expNamespace = vars["exp"]
+		vmName       = vars["name"]
+		fileName     = vars["out"]
+	)
+
+	if err := vm.StartScreenRecord(expNamespace, vmName, fileName); err != nil {
+		plog.Debug("HTTP handler called", "handler", "StartScreenRecord", "Error:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func StopScreenRecord(w http.ResponseWriter, r *http.Request) {
+	plog.Debug("HTTP handler called", "handler", "StopScreenRecord")
+	var (
+		vars         = mux.Vars(r)
+		expNamespace = vars["exp"]
+		vmName       = vars["name"]
+	)
+
+	if err := vm.StopScreenRecord(expNamespace, vmName); err != nil {
+		plog.Debug("HTTP handler called", "handler", "StopScreenRecord", "Error:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }

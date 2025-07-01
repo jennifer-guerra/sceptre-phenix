@@ -1,26 +1,25 @@
 package vm
 
 import (
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
+	"phenix/util/mm/mmcli"
 
-	"phenix/api/experiment"
-	"phenix/util/mm"
+	"github.com/activeshadow/libminimega/miniclient"
 )
 
-var (
-	ErrRecordExists = errors.New("recording already exists")
-	ErrNoRecord    = errors.New("no recordings exist")
-)
+func checkFirstError(response_channel chan *miniclient.Response) error {
+	for element := range response_channel {
+		for _, response := range element.Resp {
+			if response.Error != "" {
+				return fmt.Errorf(response.Error)
+			}
+		}
+	}
+	return nil
+}
 
-// StartCapture starts a packet capture on the given interface for the given VM
-// in the given experiment. The captured packets are written to the experiment's
-// files directory using the base name of the provided output file in PCAP
-// format. It returns any errors encountered while starting the packet capture.
-func StartRecord(expName, vmName string, out string) error {
-	if expName == "" {
+func StartScreenRecord(expNamespace, vmName, fileName string) error {
+	if expNamespace == "" {
 		return fmt.Errorf("no experiment name provided")
 	}
 
@@ -28,11 +27,11 @@ func StartRecord(expName, vmName string, out string) error {
 		return fmt.Errorf("no VM name provided")
 	}
 
-	if out == "" {
+	if fileName == "" {
 		return fmt.Errorf("no output file provided")
 	}
 
-	vm, err := Get(expName, vmName)
+	vm, err := Get(expNamespace, vmName)
 	if err != nil {
 		return fmt.Errorf("getting VM details: %w", err)
 	}
@@ -41,60 +40,63 @@ func StartRecord(expName, vmName string, out string) error {
 		return fmt.Errorf("VM is not running")
 	}
 
-	// if iface < 0 || iface >= len(vm.Networks) {
-	// 	return fmt.Errorf("invalid interface provided for capture")
-	// }
-
-	// if vm.Networks[iface] == "disconnected" {
-	// 	return fmt.Errorf("cannot capture on a disconnected interface")
-	// }
-
-	if ext := filepath.Ext(out); ext != ".fb" {
-		out = out + ".fb"
+	// Select active namespace
+	cmd := mmcli.Command{
+		Command: fmt.Sprint("namespace ", expNamespace),
+	}
+	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
+		return err
 	}
 
-	out = fmt.Sprintf("%s/files/%s", expName, filepath.Base(out))
-
-	// if err := StartRecord(mm.NS(expName), mm.VMName(vmName), mm.RecordingFile(out)); err != nil {
-	// 	return fmt.Errorf("starting VM recording on VM %s in experiment %s: %w", vmName, expName, err)
-	// }
+	// Start VNC recording on VM
+	cmd = mmcli.Command{
+		Command: fmt.Sprint("vnc record fb ", vmName, fileName),
+	}
+	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
+		return err
+	}
 
 	return nil
 }
 
-// StopCaptures stops all currently running packet captures for the given VM in
-// the given experiment. Due to a limitation in minimega, it is not possible to
-// stop a single capture if more than one capture is running for a VM. It
-// returns any errors encountered while stopping the packet captures.
-func StopRecord(expName, vmName string) error {
-	if expName == "" {
+func StopScreenRecord(expNamespace, vmName string) error {
+	if expNamespace == "" {
 		return fmt.Errorf("no experiment name provided")
 	}
 
 	if vmName == "" {
 		return fmt.Errorf("no VM name provided")
 	}
-
-	// captures := mm.GetVMCaptures(mm.NS(expName), mm.VMName(vmName))
-
-	// if captures == nil {
-	// 	return fmt.Errorf("VM %s in experiment %s: %w", vmName, expName, ErrNoCaptures)
-	// }
-
-	exp, err := experiment.Get(expName)
+	
+	vm, err := Get(expNamespace, vmName)
 	if err != nil {
-		return fmt.Errorf("getting experiment %s: %w", expName, err)
+		return fmt.Errorf("getting VM details: %w", err)
 	}
 
-	dir := fmt.Sprintf("%s/recordings", exp.Spec.BaseDir())
-
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("creating files directory for experiment %s: %w", expName, err)
+	if !vm.Running {
+		return fmt.Errorf("VM is not running")
 	}
 
-	// if err := mm.StopRecord(mm.NS(expName), mm.VMName(vmName)); err != nil {
-	// 	return fmt.Errorf("stopping VM recording for VM %s in experiment %s: %w", vmName, expName, err)
-	// }
+	// Select active namespace
+	cmd := mmcli.Command{
+		Command: fmt.Sprint("namespace ", expNamespace),
+	}
+	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
+		return err
+	}
+
+	// Stop VNC recording on VM
+	cmd = mmcli.Command{
+		Command: fmt.Sprint("vnc stop ", vmName),
+	}
+	if err := checkFirstError(mmcli.Run(&cmd)); err != nil  {
+		return err
+	}
 
 	return nil
+}
+
+func IsRecording(vmName string) bool {
+
+	return true
 }

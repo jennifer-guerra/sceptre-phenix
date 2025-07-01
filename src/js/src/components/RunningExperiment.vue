@@ -2472,6 +2472,19 @@
           })
         }   
       },
+
+      // startRecording (name) {
+
+      // },
+
+      // stopRecording (name) {
+
+      // },
+
+      // getStatus (name) {
+
+      //},
+
         
       shutdownVm  (name) {
         if (! Array.isArray(name)) {

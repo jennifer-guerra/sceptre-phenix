@@ -246,6 +246,9 @@ func Start(opts ...ServerOption) error {
 	api.HandleFunc("/console/{pid}/ws", WsConsole).Methods("GET", "OPTIONS")
 	api.HandleFunc("/console/{pid}/size", ResizeConsole).Methods("POST", "OPTIONS").Queries("cols", "{cols:[0-9]+}", "rows", "{rows:[0-9]+}")
 
+	api.HandleFunc("/experiments/{exp}/vms/{name}/startScreenRecording/{out}", StartScreenRecord).Methods("POST", "OPTIONS")
+	api.HandleFunc("/experiments/{exp}/vms/{name}/stopScreenRecording", StopScreenRecord).Methods("POST", "OPTIONS")
+
 	workflowRoutes := []route{
 		{"/workflow/apply/{branch}", weberror.ErrorHandler(ApplyWorkflow), []string{"POST"}},
 		{"/workflow/configs/{branch}", weberror.ErrorHandler(WorkflowUpsertConfig), []string{"POST"}},
